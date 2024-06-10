@@ -16,6 +16,7 @@ public class ExecutionTime {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+    private String className;
     private String methodName;
     private Long executionTime;
 

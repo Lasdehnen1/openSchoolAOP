@@ -12,15 +12,16 @@ import java.util.List;
 public class TrackingService {
     private final ExecutionTimeRepository repository;
 
-    public void saveMethodExecutionTime(String methodName, Long executionTime) {
+    public void saveMethodExecutionTime(String className, String methodName, Long executionTime) {
         ExecutionTime time = new ExecutionTime();
+        time.setClassName(className);
         time.setMethodName(methodName);
         time.setExecutionTime(executionTime);
         repository.save(time);
     }
 
     public List<ExecutionTime> getExecutionTimes(String methodName) {
-        return repository.findByMethodName(methodName);
+        return repository.findByMethodNameIgnoreCase(methodName);
     }
 
     public double getAverageExecutionTime(String methodName) {

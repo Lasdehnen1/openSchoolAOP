@@ -26,8 +26,12 @@ public class TimeTrackingAspect {
         long start = System.currentTimeMillis();
         Object result = joinPoint.proceed();
         long spent = System.currentTimeMillis() - start;
+
+        String methodName = joinPoint.getSignature().getName();
+        String className = joinPoint.getSignature().getDeclaringTypeName();
+
         log.info("Execution time of {}: {} ms", joinPoint.getSignature(), spent);
-        trackingService.saveMethodExecutionTime(joinPoint.getSignature().toShortString(), spent);
+        trackingService.saveMethodExecutionTime(className, methodName, spent);
         return result;
     }
 

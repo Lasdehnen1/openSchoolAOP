@@ -10,6 +10,7 @@ import org.aspectj.lang.annotation.Pointcut;
 import org.springframework.stereotype.Component;
 
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
 
 @Aspect
 @Component
@@ -18,6 +19,7 @@ import java.util.concurrent.CompletableFuture;
 public class AsyncTimeTrackingAspect {
 
     private final TrackingService trackingService;
+    private final Executor asyncExecutor;
 
     @Pointcut("@annotation(com.t1.aopopenschool.annotation.TrackAsyncTime)")
     public void trackingAsyncPointCut() {
@@ -25,22 +27,18 @@ public class AsyncTimeTrackingAspect {
     }
 
     @Around("trackingAsyncPointCut()")
-    public Object trackAsyncTime(ProceedingJoinPoint joinPoint) {
+    public Object trackAsyncTime(ProceedingJoinPoint joinPoint) throws Throwable {
         long start = System.currentTimeMillis();
-        CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
-            try {
-                log.info("Asynchronous started in AsyncTimeTrackingAspect at {} on thread: {}", start, Thread.currentThread().getName());
-                joinPoint.proceed();
-            } catch (Throwable throwable) {
-                throw new RuntimeException(throwable);
-            }
-        });
-        future.thenRun(() -> {
-            long spent = System.currentTimeMillis() - start;
-            log.info("Execution time of {}: {} ms on thread: {}", joinPoint.getSignature(), spent, Thread.currentThread().getName());
-            trackingService.saveMethodExecutionTime(joinPoint.getSignature().toShortString(), spent);
-        });
-        return future;
+        Object result = joinPoint.proceed();
+        long spent = System.currentTimeMillis() - start;
+
+        String className = joinPoint.getSignature().getDeclaringTypeName();
+        String methodName = joinPoint.getSignature().getName();
+        CompletableFuture.runAsync(() -> {
+            log.info("Execution time of {}: {} ms on thread: {}", methodName, spent, Thread.currentThread().getName());
+            trackingService.saveMethodExecutionTime(className, methodName, spent);
+        }, asyncExecutor);
+        return result;
     }
 
 }
