@@ -9,7 +9,6 @@ import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Pointcut;
 import org.springframework.stereotype.Component;
 
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 
 @Aspect
@@ -23,7 +22,7 @@ public class AsyncTimeTrackingAspect {
 
     @Pointcut("@annotation(com.t1.aopopenschool.annotation.TrackAsyncTime)")
     public void trackingAsyncPointCut() {
-
+        // Срез (pointcut) для методов аннотируемых @TrackAsyncTime
     }
 
     @Around("trackingAsyncPointCut()")
@@ -34,10 +33,10 @@ public class AsyncTimeTrackingAspect {
 
         String className = joinPoint.getSignature().getDeclaringTypeName();
         String methodName = joinPoint.getSignature().getName();
-        CompletableFuture.runAsync(() -> {
+        asyncExecutor.execute(() -> {
             log.info("Execution time of {}: {} ms on thread: {}", methodName, spent, Thread.currentThread().getName());
             trackingService.saveMethodExecutionTime(className, methodName, spent);
-        }, asyncExecutor);
+        });
         return result;
     }
 
